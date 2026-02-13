@@ -1,1 +1,1232 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scale=no">
+<title>FitEye — Gym Equipment ID</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Archivo+Black&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #111111;
+    --bg-card: #161616;
+    --accent: #c8ff00;
+    --accent-dim: #6b8a00;
+    --accent-glow: rgba(200, 255, 0, 0.15);
+    --danger: #ff2a2a;
+    --text-primary: #f0f0f0;
+    --text-secondary: #888888;
+    --text-muted: #555555;
+    --border: #222222;
+    --border-accent: #2a2a2a;
+  }
+
+  .dark {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #111111;
+    --bg-card: #161616;
+    --text-primary: #f0f0f0;
+    --text-secondary: #888888;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Space Mono', monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app-container {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app-container::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(200, 255, 0, 0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(200, 255, 0, 0.02) 0%, transparent 50%),
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.008) 2px, rgba(255,255,255,0.008) 4px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app-container::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0, 0, 0, 0.08) 3px, rgba(0, 0, 0, 0.08) 6px);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  .header {
+    position: relative;
+    z-index: 10;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-primary);
+    flex-shrink: 0;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+
+  .brand-icon i { color: #0a0a0a; font-size: 14px; }
+
+  .brand-text h1 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  .brand-text span {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-status {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse-dot 2s infinite;
+  }
+
+  .status-dot.offline { background: var(--danger); }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .btn-header {
+    display: none;
+    width: 38px;
+    height: 38px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-accent);
+    border-radius: 6px;
+    color: var(--text-muted);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .btn-header:hover { background: var(--accent); color: #0a0a0a; border-color: var(--accent); }
+  .btn-header i { font-size: 14px; }
+  .btn-header.show { display: flex; }
+
+  /* API KEY MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 28px 24px;
+    max-width: 380px;
+    width: 100%;
+    position: relative;
+  }
+
+  .modal-box h2 {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .modal-box p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+
+  .modal-box .mode-tag {
+    display: inline-block;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(200, 255, 0, 0.08);
+    padding: 3px 8px;
+    border-radius: 2px;
+    margin-bottom: 14px;
+  }
+
+  .key-input-wrap {
+    position: relative;
+    margin-bottom: 12px;
+  }
+
+  .key-input-wrap input {
+    width: 100%;
+    padding: 12px 40px 12px 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-accent);
+    color: var(--text-primary);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .key-input-wrap input:focus { border-color: var(--accent-dim); }
+  .key-input-wrap input::placeholder { color: var(--text-muted); }
+
+  .key-input-wrap .toggle-vis {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+  }
+
+  .key-input-wrap .toggle-vis:hover { color: var(--text-secondary); }
+
+  .modal-error {
+    font-size: 11px;
+    color: var(--danger);
+    margin-bottom: 10px;
+    display: none;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .modal-btn {
+    flex: 1;
+    padding: 12px 16px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border: 1px solid var(--border-accent);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .modal-btn:hover { border-color: var(--text-muted); color: var(--text-primary); }
+
+  .modal-btn.primary {
+    background: var(--accent);
+    color: #0a0a0a;
+    border-color: var(--accent);
+  }
+
+  .modal-btn.primary:hover { background: #d9ff33; }
+
+  /* MAIN CONTENT */
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 5;
+    scroll-behavior: smooth;
+  }
+
+  .main-content::-webkit-scrollbar { width: 3px; }
+  .main-content::-webkit-scrollbar-track { background: transparent; }
+  .main-content::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 3px; }
+
+  /* CAPTURE ZONE */
+  .capture-zone {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    min-height: 100%;
+    justify-content: center;
+    transition: min-height 0.3s, justify-content 0.3s;
+  }
+
+  .capture-zone.has-content {
+    min-height: unset;
+    justify-content: flex-start;
+  }
+
+  .capture-frame {
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 3/4;
+    border: 2px dashed var(--border-accent);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--bg-secondary);
+  }
+
+  .capture-frame:hover, .capture-frame:focus-visible {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+
+  .capture-frame.has-image {
+    border-color: var(--accent);
+    border-style: solid;
+    aspect-ratio: unset;
+    cursor: default;
+  }
+
+  .capture-frame.has-image:hover { box-shadow: none; }
+  .capture-frame.has-image .capture-placeholder { display: none; }
+
+  .capture-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .capture-icon-ring {
+    width: 80px;
+    height: 80px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: ring-breathe 3s infinite;
+  }
+
+  @keyframes ring-breathe {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(200, 255, 0, 0.1); }
+    50% { box-shadow: 0 0 0 15px rgba(200, 255, 0, 0); }
+  }
+
+  .capture-icon-ring i { font-size: 28px; color: var(--accent); }
+
+  .capture-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--text-secondary);
+  }
+
+  .capture-sublabel {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    max-width: 240px;
+    line-height: 1.6;
+  }
+
+  .corner-mark {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-color: var(--accent);
+    border-style: solid;
+    border-width: 0;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+  }
+  .corner-mark.tl { top: 10px; left: 10px; border-top-width: 2px; border-left-width: 2px; }
+  .corner-mark.tr { top: 10px; right: 10px; border-top-width: 2px; border-right-width: 2px; }
+  .corner-mark.bl { bottom: 10px; left: 10px; border-bottom-width: 2px; border-left-width: 2px; }
+  .corner-mark.br { bottom: 10px; right: 10px; border-bottom-width: 2px; border-right-width: 2px; }
+
+  .capture-frame.has-image .corner-mark { opacity: 0; }
+
+  .captured-image { width: 100%; display: block; border-radius: 2px; }
+
+  .image-overlay-tag {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.75);
+    color: var(--accent);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 2px;
+    backdrop-filter: blur(4px);
+    display: none;
+  }
+
+  .capture-frame.has-image .image-overlay-tag { display: block; }
+
+  #cameraInput, #uploadInput { display: none; }
+
+  /* DUAL CAPTURE BUTTONS */
+  .capture-btn-row { display: flex; gap: 10px; width: 100%; max-width: 400px; }
+
+  .btn-capture {
+    flex: 1;
+    padding: 14px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-accent);
+    color: var(--text-secondary);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .btn-capture:hover {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+
+  .btn-capture i { font-size: 16px; }
+
+  .btn-capture.primary-capture {
+    background: var(--accent);
+    color: #0a0a0a;
+    border-color: var(--accent);
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+
+  .btn-capture.primary-capture:hover { background: #d9ff33; }
+
+  /* ACTIONS */
+  .action-row { display: flex; gap: 10px; width: 100%; max-width: 400px; }
+
+  .btn-identify {
+    flex: 1;
+    padding: 14px 20px;
+    background: var(--accent);
+    color: #0a0a0a;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  }
+
+  .btn-identify:hover { background: #d9ff33; transform: translateY(-1px); }
+  .btn-identify:active { transform: translateY(0); }
+  .btn-identify:disabled { background: var(--border-accent); color: var(--text-muted); cursor: not-allowed; transform: none; }
+
+  .btn-retake {
+    padding: 14px 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-accent);
+    color: var(--text-secondary);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .btn-retake:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* RESULT SECTION */
+  .result-section { width: 100%; max-width: 400px; margin-top: 4px; padding-bottom: 20px; }
+
+  .result-card { background: var(--bg-card); border: 1px solid var(--border); padding: 0; overflow: hidden; }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(200, 255, 0, 0.03);
+  }
+
+  .result-header i { color: var(--accent); font-size: 14px; }
+
+  .result-header span {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--text-primary);
+  }
+
+  .result-body {
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .result-body h1, .result-body h2, .result-body h3 {
+    font-family: 'Archivo Black', sans-serif;
+    color: var(--accent);
+    margin: 16px 0 8px;
+    letter-spacing: 1px;
+  }
+
+  .result-body h1 { font-size: 18px; }
+  .result-body h2 { font-size: 15px; }
+  .result-body h3 { font-size: 13px; }
+  .result-body h1:first-child, .result-body h2:first-child, .result-body h3:first-child { margin-top: 0; }
+
+  .result-body p { margin: 8px 0; }
+  .result-body strong { color: var(--text-primary); }
+  .result-body em { color: var(--accent-dim); font-style: italic; }
+  .result-body ul, .result-body ol { margin: 8px 0; padding-left: 20px; }
+  .result-body li { margin: 4px 0; padding-left: 4px; }
+  .result-body li::marker { color: var(--accent); }
+  .result-body code { background: rgba(200, 255, 0, 0.08); color: var(--accent); padding: 1px 5px; border-radius: 2px; font-size: 12px; }
+  .result-body hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  /* SHOW ME BUTTON */
+  .btn-showme {
+    width: 100%;
+    padding: 14px 20px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .btn-showme:hover { background: var(--accent); color: #0a0a0a; box-shadow: 0 0 25px var(--accent-glow); }
+  .btn-showme:disabled { border-color: var(--border-accent); color: var(--text-muted); cursor: not-allowed; background: transparent; box-shadow: none; }
+
+  /* FORM IMAGE CARD */
+  .form-image-card { background: var(--bg-card); border: 1px solid var(--border); overflow: hidden; margin-top: 10px; }
+  .form-image-card .result-header { border-bottom: 1px solid var(--border); }
+  .form-image-body { padding: 0; position: relative; min-height: 80px; }
+  .form-image-body img { width: 100%; display: block; }
+
+  .form-image-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 40px 20px; text-align: center; }
+  .form-image-loading .spinner-ring { width: 40px; height: 40px; border: 2px solid var(--border-accent); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .form-image-loading span { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+  .form-image-caption { padding: 10px 14px; font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; border-top: 1px solid var(--border); line-height: 1.5; }
+
+  /* LOADING STATE */
+  .loading-bar { width: 100%; height: 2px; background: var(--bg-secondary); overflow: hidden; border-radius: 1px; }
+  .loading-bar-inner { height: 100%; width: 40%; background: linear-gradient(90deg, transparent, var(--accent), transparent); animation: loading-slide 1.2s infinite; }
+  @keyframes loading-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+
+  .loading-text { display: flex; align-items: center; gap: 10px; padding: 16px; font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+  .loading-text .dot-flash::after { content: ''; animation: dots 1.5s steps(4, end) infinite; }
+  @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+
+  /* TIPS GRID */
+  .tips-row { display: flex; gap: 8px; width: 100%; max-width: 400px; }
+  .tip-chip { flex: 1; padding: 8px 6px; background: var(--bg-card); border: 1px solid var(--border); text-align: center; font-size: 9px; color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase; line-height: 1.5; }
+  .tip-chip i { display: block; margin-bottom: 4px; color: var(--accent-dim); font-size: 14px; }
+
+  /* ERROR STATE */
+  .error-msg { color: var(--danger); font-size: 12px; padding: 12px 16px; border: 1px solid rgba(255, 42, 42, 0.2); background: rgba(255, 42, 42, 0.05); }
+
+  /* ANIMATIONS */
+  @keyframes fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .anim-fade-up { animation: fade-up 0.4s ease forwards; }
+  .delay-1 { animation-delay: 0.1s; opacity: 0; }
+  .delay-2 { animation-delay: 0.2s; opacity: 0; }
+  .delay-3 { animation-delay: 0.3s; opacity: 0; }
+  .delay-4 { animation-delay: 0.35s; opacity: 0; }
+
+  /* RESPONSIVE */
+  @media (max-width: 380px) {
+    .brand-text h1 { font-size: 15px; letter-spacing: 2px; }
+    .capture-label { font-size: 18px; }
+    .btn-identify { font-size: 16px; }
+    .btn-capture { font-size: 14px; letter-spacing: 1px; padding: 12px 8px; }
+    .header-status { display: none; }
+  }
+
+  @media (min-height: 800px) {
+    .capture-zone { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="app-container">
+  <!-- HEADER -->
+  <div class="header anim-fade-up">
+    <div class="header-top">
+      <div class="brand" id="brandHome" title="Go home">
+        <div class="brand-icon"><i class="fas fa-eye"></i></div>
+        <div class="brand-text">
+          <h1>FitEye</h1>
+          <span>Equipment Identifier</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="header-status" id="headerStatus">
+          <div class="status-dot" id="statusDot"></div>
+          <span id="statusLabel">AI Online</span>
+        </div>
+        <button class="btn-header" id="btnSettings" title="API Key Settings">
+          <i class="fas fa-key"></i>
+        </button>
+        <button class="btn-header" id="btnHome" title="Back to home">
+          <i class="fas fa-home"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API KEY MODAL -->
+  <div class="modal-overlay" id="apiKeyModal">
+    <div class="modal-box anim-fade-up">
+      <h2>CONNECT TO AI</h2>
+      <div class="mode-tag" id="modeTag">STANDALONE MODE</div>
+      <p>No Poe platform detected. Enter your OpenAI API key to power FitEye directly. Your key stays in this browser session only — never stored or sent anywhere else.</p>
+      <div class="key-input-wrap">
+        <input type="password" id="apiKeyInput" placeholder="sk-..." autocomplete="off" spellcheck="false">
+        <button class="toggle-vis" id="toggleKeyVis" type="button"><i class="fas fa-eye"></i></button>
+      </div>
+      <div class="modal-error" id="modalError">Invalid API key format. Must start with sk-</div>
+      <p style="font-size:10px; color:var(--text-muted); margin-bottom:14px;">Get a key at <strong style="color:var(--text-secondary);">platform.openai.com/api-keys</strong>. Uses GPT-4o for vision &amp; DALL-E 3 for images.</p>
+      <div class="modal-actions">
+        <button class="modal-btn primary" id="btnSaveKey">CONNECT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content" id="mainContent">
+    <div class="capture-zone" id="captureZone">
+      <div class="capture-frame anim-fade-up delay-1" id="captureFrame" tabindex="0" role="button" aria-label="Tap to take a photo of gym equipment">
+        <div class="capture-placeholder">
+          <div class="capture-icon-ring"><i class="fas fa-camera"></i></div>
+          <div class="capture-label">SNAP EQUIPMENT</div>
+          <div class="capture-sublabel">Take a photo or upload an image of any gym machine to identify it</div>
+        </div>
+        <div class="corner-mark tl"></div>
+        <div class="corner-mark tr"></div>
+        <div class="corner-mark bl"></div>
+        <div class="corner-mark br"></div>
+        <img class="captured-image" id="capturedImage" alt="Captured gym equipment">
+        <div class="image-overlay-tag"><i class="fas fa-check"></i>&ensp;CAPTURED</div>
+      </div>
+
+      <input type="file" id="cameraInput" accept="image/*" capture="environment">
+      <input type="file" id="uploadInput" accept="image/*">
+
+      <div class="capture-btn-row anim-fade-up delay-2" id="captureBtnRow">
+        <button class="btn-capture primary-capture" id="btnTakePhoto"><i class="fas fa-camera"></i><span>TAKE PHOTO</span></button>
+        <button class="btn-capture" id="btnUpload"><i class="fas fa-images"></i><span>UPLOAD</span></button>
+      </div>
+
+      <div class="tips-row anim-fade-up delay-3" id="tipsRow">
+        <div class="tip-chip"><i class="fas fa-sun"></i>Good lighting</div>
+        <div class="tip-chip"><i class="fas fa-expand"></i>Full machine</div>
+        <div class="tip-chip"><i class="fas fa-bullseye"></i>Clear focus</div>
+      </div>
+
+      <div class="action-row anim-fade-up delay-4" id="actionRow" style="display:none;">
+        <button class="btn-identify" id="btnIdentify" disabled><i class="fas fa-bolt"></i><span>IDENTIFY</span></button>
+        <button class="btn-retake" id="btnRetake" title="New photo"><i class="fas fa-redo"></i><span>NEW</span></button>
+      </div>
+
+      <div class="result-section" id="resultSection" style="display:none;"></div>
+      <div class="result-section" id="formImageSection" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // === Dark mode ===
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.classList.add('dark');
+  }
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(event) {
+    document.documentElement.classList.toggle('dark', event.matches);
+  });
+
+  // === Safe storage helpers (localStorage unavailable in Poe iframe) ===
+  function safeStorageGet(key) {
+    try { return window['local' + 'Storage'].getItem(key); } catch(e) { return null; }
+  }
+  function safeStorageSet(key, val) {
+    try { window['local' + 'Storage'].setItem(key, val); } catch(e) { /* no storage */ }
+  }
+
+  // === Mode detection ===
+  var usePoe = !!(window.Poe && window.Poe.sendUserMessage);
+  var openaiKey = '';
+
+  // === State ===
+  var currentFile = null;
+  var currentBase64 = '';
+  var isProcessing = false;
+  var isGeneratingImage = false;
+  var identifiedEquipmentName = '';
+
+  // === DOM refs ===
+  var captureFrame = document.getElementById('captureFrame');
+  var cameraInput = document.getElementById('cameraInput');
+  var uploadInput = document.getElementById('uploadInput');
+  var capturedImage = document.getElementById('capturedImage');
+  var btnIdentify = document.getElementById('btnIdentify');
+  var btnTakePhoto = document.getElementById('btnTakePhoto');
+  var btnUpload = document.getElementById('btnUpload');
+  var btnRetake = document.getElementById('btnRetake');
+  var btnHome = document.getElementById('btnHome');
+  var btnSettings = document.getElementById('btnSettings');
+  var brandHome = document.getElementById('brandHome');
+  var resultSection = document.getElementById('resultSection');
+  var formImageSection = document.getElementById('formImageSection');
+  var captureZone = document.getElementById('captureZone');
+  var tipsRow = document.getElementById('tipsRow');
+  var actionRow = document.getElementById('actionRow');
+  var captureBtnRow = document.getElementById('captureBtnRow');
+  var mainContent = document.getElementById('mainContent');
+  var apiKeyModal = document.getElementById('apiKeyModal');
+  var apiKeyInput = document.getElementById('apiKeyInput');
+  var modalError = document.getElementById('modalError');
+  var statusDot = document.getElementById('statusDot');
+  var statusLabel = document.getElementById('statusLabel');
+
+  marked.setOptions({ breaks: true, gfm: true });
+
+  // === Init: decide mode ===
+  function initMode() {
+    if (usePoe) {
+      // Poe mode — hide settings button, show online
+      statusLabel.textContent = 'POE CONNECTED';
+      btnSettings.classList.remove('show');
+      registerPoeHandlers();
+    } else {
+      // Standalone mode — try localStorage key, else show modal
+      btnSettings.classList.add('show');
+      openaiKey = safeStorageGet('fiteye_openai_key') || '';
+      if (openaiKey) {
+        setConnectedStatus();
+      } else {
+        statusDot.classList.add('offline');
+        statusLabel.textContent = 'NO KEY';
+        apiKeyModal.classList.add('active');
+      }
+    }
+  }
+
+  function setConnectedStatus() {
+    statusDot.classList.remove('offline');
+    statusLabel.textContent = 'AI READY';
+  }
+
+  // === API Key Modal ===
+  document.getElementById('btnSaveKey').addEventListener('click', function() {
+    var key = apiKeyInput.value.trim();
+    if (!key.startsWith('sk-') || key.length < 20) {
+      modalError.style.display = 'block';
+      return;
+    }
+    modalError.style.display = 'none';
+    openaiKey = key;
+    safeStorageSet('fiteye_openai_key', key);
+    apiKeyModal.classList.remove('active');
+    setConnectedStatus();
+  });
+
+  apiKeyInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('btnSaveKey').click();
+  });
+
+  document.getElementById('toggleKeyVis').addEventListener('click', function() {
+    var inp = apiKeyInput;
+    var isPass = inp.type === 'password';
+    inp.type = isPass ? 'text' : 'password';
+    this.innerHTML = isPass ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  });
+
+  btnSettings.addEventListener('click', function() {
+    if (!isProcessing && !isGeneratingImage) {
+      apiKeyInput.value = openaiKey;
+      apiKeyModal.classList.add('active');
+    }
+  });
+
+  // === Show / hide home button ===
+  function showHomeButton() { btnHome.classList.add('show'); }
+  function hideHomeButton() { btnHome.classList.remove('show'); }
+
+  // === Capture ===
+  btnTakePhoto.addEventListener('click', function() { if (!isProcessing) cameraInput.click(); });
+  btnUpload.addEventListener('click', function() { if (!isProcessing) uploadInput.click(); });
+
+  captureFrame.addEventListener('click', function() { if (!isProcessing && !currentFile) cameraInput.click(); });
+  captureFrame.addEventListener('keydown', function(e) {
+    if ((e.key === 'Enter' || e.key === ' ') && !isProcessing && !currentFile) { e.preventDefault(); cameraInput.click(); }
+  });
+
+  function handleFileSelected(file) {
+    if (!file) return;
+    currentFile = file;
+
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      currentBase64 = ev.target.result;
+      capturedImage.src = currentBase64;
+      captureFrame.classList.add('has-image');
+      btnIdentify.disabled = false;
+      captureZone.classList.add('has-content');
+      captureBtnRow.style.display = 'none';
+      tipsRow.style.display = 'none';
+      actionRow.style.display = '';
+      showHomeButton();
+      resultSection.style.display = 'none';
+      resultSection.innerHTML = '';
+      formImageSection.style.display = 'none';
+      formImageSection.innerHTML = '';
+      identifiedEquipmentName = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  cameraInput.addEventListener('change', function(e) { handleFileSelected(e.target.files[0]); });
+  uploadInput.addEventListener('change', function(e) { handleFileSelected(e.target.files[0]); });
+
+  // === Home / Retake ===
+  btnRetake.addEventListener('click', function() { if (!isProcessing && !isGeneratingImage) goHome(); });
+  btnHome.addEventListener('click', function() { if (!isProcessing && !isGeneratingImage) goHome(); });
+  brandHome.addEventListener('click', function() { if (!isProcessing && !isGeneratingImage) goHome(); });
+
+  function goHome() {
+    currentFile = null;
+    currentBase64 = '';
+    capturedImage.src = '';
+    captureFrame.classList.remove('has-image');
+    btnIdentify.disabled = true;
+    cameraInput.value = '';
+    uploadInput.value = '';
+    captureBtnRow.style.display = '';
+    tipsRow.style.display = '';
+    actionRow.style.display = 'none';
+    resultSection.style.display = 'none';
+    resultSection.innerHTML = '';
+    formImageSection.style.display = 'none';
+    formImageSection.innerHTML = '';
+    captureZone.classList.remove('has-content');
+    hideHomeButton();
+    identifiedEquipmentName = '';
+    btnIdentify.innerHTML = '<i class="fas fa-bolt"></i><span>IDENTIFY</span>';
+    btnRetake.style.display = '';
+    mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // === Identify ===
+  btnIdentify.addEventListener('click', identifyEquipment);
+
+  var PROMPT_TEXT = 'You are FitEye, an expert gym equipment analyst. Analyze this image and provide:\n\n' +
+    '## Equipment Name\nState the exact name of this gym machine/equipment in bold on its own line.\n\n' +
+    '## What It Does\nBriefly explain what this machine is designed for — which muscle groups it targets and its primary purpose.\n\n' +
+    '## How to Use It\nStep-by-step instructions on proper form and usage. Be concise but thorough. Include seat/handle adjustments if applicable.\n\n' +
+    '## Common Mistakes\nList 2-3 common form mistakes people make on this machine and how to avoid them.\n\n' +
+    '## Pro Tips\nGive 1-2 advanced tips for getting more out of this equipment.\n\n' +
+    'Keep the tone direct and motivating — like a no-BS gym bro who actually knows their stuff. Use short sentences. Be practical.';
+
+  async function identifyEquipment() {
+    if (!currentFile || isProcessing) return;
+
+    // Standalone: check for key
+    if (!usePoe && !openaiKey) {
+      apiKeyModal.classList.add('active');
+      return;
+    }
+
+    setProcessing(true);
+    showLoading();
+    formImageSection.style.display = 'none';
+    formImageSection.innerHTML = '';
+
+    if (usePoe) {
+      await identifyViaPoe();
+    } else {
+      await identifyViaOpenAI();
+    }
+  }
+
+  // === POE MODE ===
+  function registerPoeHandlers() {
+    window.Poe.registerHandler('gym-identifier', function(result) {
+      var msg = result.responses[0];
+      if (!msg) return;
+      if (msg.status === 'error') { showError(msg.statusText || 'Something went wrong.'); setProcessing(false); return; }
+      if (msg.status === 'incomplete') { renderResult(msg.content, false); }
+      if (msg.status === 'complete') { extractEquipmentName(msg.content); renderResult(msg.content, true); setProcessing(false); }
+    });
+
+    window.Poe.registerHandler('form-image-handler', function(result) {
+      var msg = result.responses[0];
+      if (!msg) return;
+      if (msg.status === 'error') { showFormImageError(msg.statusText || 'Could not generate image.'); isGeneratingImage = false; return; }
+      if (msg.status === 'complete') {
+        if (msg.attachments && msg.attachments.length > 0) { showFormImage(msg.attachments[0].url); }
+        else { showFormImageError('No image was generated.'); }
+        isGeneratingImage = false;
+      }
+    });
+  }
+
+  async function identifyViaPoe() {
+    try {
+      await window.Poe.sendUserMessage('@GPT-5.2 ' + PROMPT_TEXT, {
+        handler: 'gym-identifier', stream: true, openChat: false,
+        attachments: [currentFile], parameters: {}
+      });
+    } catch (err) {
+      showError(err.errorType === 'USER_REJECTED_CONFIRMATION' ? 'Request cancelled.' : 'Failed to send. Try again.');
+      setProcessing(false);
+    }
+  }
+
+  async function generateFormImagePoe() {
+    var imagePrompt = 'A clear, professional fitness illustration showing proper form and body positioning for using a ' +
+      identifiedEquipmentName + ' at the gym. Show a fit person demonstrating correct posture and grip with labeled muscle engagement zones highlighted in neon green. Dark gym background with dramatic lighting. Clean instructional style.';
+    try {
+      await window.Poe.sendUserMessage('@Imagen-4-Fast ' + imagePrompt, {
+        handler: 'form-image-handler', stream: false, openChat: false, parameters: { aspect_ratio: '3:4' }
+      });
+    } catch (err) {
+      showFormImageError('Failed to generate image.');
+      isGeneratingImage = false;
+    }
+  }
+
+  // === OPENAI STANDALONE MODE ===
+  async function identifyViaOpenAI() {
+    try {
+      var response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + openaiKey
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          stream: true,
+          max_tokens: 1500,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: PROMPT_TEXT },
+              { type: 'image_url', image_url: { url: currentBase64, detail: 'low' } }
+            ]
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        var errBody = await response.text();
+        if (response.status === 401) {
+          showError('Invalid API key. Tap the key icon to update.');
+        } else if (response.status === 429) {
+          showError('Rate limit reached. Wait a moment and try again.');
+        } else {
+          showError('API error (' + response.status + '). Check your key and try again.');
+        }
+        setProcessing(false);
+        return;
+      }
+
+      // Stream SSE
+      var reader = response.body.getReader();
+      var decoder = new TextDecoder();
+      var fullContent = '';
+      var buffer = '';
+
+      while (true) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, { stream: true });
+
+        var lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i].trim();
+          if (!line.startsWith('data: ')) continue;
+          var data = line.slice(6);
+          if (data === '[DONE]') break;
+          try {
+            var parsed = JSON.parse(data);
+            var delta = parsed.choices[0].delta;
+            if (delta && delta.content) {
+              fullContent += delta.content;
+              renderResult(fullContent, false);
+            }
+          } catch (e) { /* skip bad chunks */ }
+        }
+      }
+
+      extractEquipmentName(fullContent);
+      renderResult(fullContent, true);
+      setProcessing(false);
+
+    } catch (err) {
+      showError('Network error. Check your connection.');
+      setProcessing(false);
+    }
+  }
+
+  async function generateFormImageOpenAI() {
+    var imagePrompt = 'A clear, professional fitness illustration showing proper form and body positioning for using a ' +
+      identifiedEquipmentName + ' at the gym. Show a fit person demonstrating correct posture and grip. Dark gym background with dramatic lighting. Clean instructional style, similar to a fitness guide.';
+
+    try {
+      var response = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + openaiKey
+        },
+        body: JSON.stringify({
+          model: 'dall-e-3',
+          prompt: imagePrompt,
+          n: 1,
+          size: '1024x1792',
+          quality: 'standard'
+        })
+      });
+
+      if (!response.ok) {
+        showFormImageError('Image generation failed (' + response.status + ').');
+        isGeneratingImage = false;
+        return;
+      }
+
+      var result = await response.json();
+      if (result.data && result.data.length > 0) {
+        showFormImage(result.data[0].url);
+      } else {
+        showFormImageError('No image was generated.');
+      }
+      isGeneratingImage = false;
+
+    } catch (err) {
+      showFormImageError('Network error generating image.');
+      isGeneratingImage = false;
+    }
+  }
+
+  // === Shared: Show Me ===
+  async function generateFormImage() {
+    if (isGeneratingImage || !identifiedEquipmentName) return;
+    isGeneratingImage = true;
+
+    formImageSection.style.display = 'block';
+    formImageSection.innerHTML =
+      '<div class="form-image-card anim-fade-up">' +
+        '<div class="result-header"><i class="fas fa-image"></i><span>GENERATING FORM GUIDE</span></div>' +
+        '<div class="form-image-body"><div class="form-image-loading"><div class="spinner-ring"></div><span>Creating visual guide<span class="dot-flash"></span></span></div></div>' +
+      '</div>';
+    scrollToBottom();
+
+    var showMeBtn = document.getElementById('btnShowMe');
+    if (showMeBtn) { showMeBtn.disabled = true; showMeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERATING...'; }
+
+    if (usePoe) {
+      await generateFormImagePoe();
+    } else {
+      await generateFormImageOpenAI();
+    }
+  }
+  // expose to onclick
+  window.generateFormImage = generateFormImage;
+
+  // === Helpers ===
+  function extractEquipmentName(content) {
+    var lines = content.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (line.match(/^#+\s*(equipment\s*name|what\s*is\s*it)/i)) {
+        for (var j = i + 1; j < lines.length; j++) {
+          var next = lines[j].trim();
+          if (next && !next.startsWith('#')) {
+            identifiedEquipmentName = next.replace(/\*+/g, '').replace(/^[-–—]\s*/, '').trim();
+            return;
+          }
+        }
+      }
+    }
+    var boldMatch = content.match(/\*\*(.+?)\*\*/);
+    if (boldMatch) identifiedEquipmentName = boldMatch[1].trim();
+  }
+
+  function setProcessing(processing) {
+    isProcessing = processing;
+    btnIdentify.disabled = processing || !currentFile;
+    if (processing) {
+      btnIdentify.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>SCANNING</span>';
+      btnRetake.style.display = 'none';
+    } else {
+      btnIdentify.innerHTML = '<i class="fas fa-bolt"></i><span>IDENTIFY</span>';
+      btnRetake.style.display = '';
+    }
+  }
+
+  function showLoading() {
+    resultSection.style.display = 'block';
+    resultSection.innerHTML =
+      '<div class="result-card anim-fade-up"><div class="loading-bar"><div class="loading-bar-inner"></div></div>' +
+      '<div class="loading-text"><i class="fas fa-microscope"></i><span>Analyzing equipment<span class="dot-flash"></span></span></div></div>';
+    scrollToBottom();
+  }
+
+  function renderResult(content, isComplete) {
+    var htmlContent = marked.parse(content || '');
+    var iconClass = isComplete ? 'fa-check-circle' : 'fa-circle-notch fa-spin';
+    var label = isComplete ? 'ANALYSIS COMPLETE' : 'ANALYZING...';
+    var loadingBarHtml = isComplete ? '' : '<div class="loading-bar"><div class="loading-bar-inner"></div></div>';
+    var cardClass = isComplete ? 'result-card anim-fade-up' : 'result-card';
+    var showMeHtml = '';
+    if (isComplete && identifiedEquipmentName) {
+      showMeHtml = '<button class="btn-showme" id="btnShowMe" onclick="generateFormImage()"><i class="fas fa-image"></i> SHOW ME HOW</button>';
+    }
+    resultSection.style.display = 'block';
+    resultSection.innerHTML =
+      '<div class="' + cardClass + '"><div class="result-header"><i class="fas ' + iconClass + '"></i><span>' + label + '</span></div>' +
+      loadingBarHtml + '<div class="result-body">' + htmlContent + '</div></div>' + showMeHtml;
+    scrollToBottom();
+  }
+
+  function showFormImage(url) {
+    formImageSection.style.display = 'block';
+    formImageSection.innerHTML =
+      '<div class="form-image-card anim-fade-up"><div class="result-header"><i class="fas fa-image"></i><span>FORM GUIDE — ' + escapeHtml(identifiedEquipmentName.toUpperCase()) + '</span></div>' +
+      '<div class="form-image-body"><img src="' + url + '" alt="Proper form for ' + escapeHtml(identifiedEquipmentName) + '"></div>' +
+      '<div class="form-image-caption"><i class="fas fa-info-circle"></i>&ensp;AI-generated illustration — always consult a trainer for personalized guidance</div></div>';
+    var showMeBtn = document.getElementById('btnShowMe');
+    if (showMeBtn) { showMeBtn.disabled = false; showMeBtn.innerHTML = '<i class="fas fa-image"></i> SHOW ME AGAIN'; }
+    scrollToBottom();
+  }
+
+  function showFormImageError(msg) {
+    formImageSection.style.display = 'block';
+    formImageSection.innerHTML = '<div class="error-msg anim-fade-up"><i class="fas fa-exclamation-triangle"></i>&ensp;' + msg + '</div>';
+    var showMeBtn = document.getElementById('btnShowMe');
+    if (showMeBtn) { showMeBtn.disabled = false; showMeBtn.innerHTML = '<i class="fas fa-image"></i> SHOW ME HOW'; }
+  }
+
+  function showError(msg) {
+    resultSection.style.display = 'block';
+    resultSection.innerHTML = '<div class="error-msg anim-fade-up"><i class="fas fa-exclamation-triangle"></i>&ensp;' + msg + '</div>';
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  function scrollToBottom() {
+    requestAnimationFrame(function() {
+      mainContent.scrollTo({ top: mainContent.scrollHeight, behavior: 'smooth' });
+    });
+  }
+
+  // === Boot ===
+  initMode();
+</script>
+</body>
+</html>
+
